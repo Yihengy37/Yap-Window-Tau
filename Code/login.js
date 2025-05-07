@@ -50,7 +50,7 @@
       return;
     }
     fetch(
-      "https://raw.githubusercontent.com/TheHumblePotato/Yap-Window-Copy/refs/heads/main/Code/gui.js?token=$(date +%s)",
+      "https://raw.githubusercontent.com/Yihengy37/Yap-Window-Tau/refs/heads/main/Code/gui.js?token=$(date +%s)",
     )
       .then((r) => r.text())
       .then((code) => {
@@ -72,7 +72,7 @@
             child,
           };
           fetch(
-            "https://raw.githubusercontent.com/TheHumblePotato/Yap-Window-Copy/refs/heads/main/Code/chat.js?token=$(date +%s)",
+            "https://raw.githubusercontent.com/Yihengy37/Yap-Window-Tau/refs/heads/main/Code/chat.js?token=$(date +%s)",
           )
             .then((r) => r.text())
             .then((chatCode) => {
