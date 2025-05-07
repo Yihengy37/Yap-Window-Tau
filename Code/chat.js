@@ -2035,7 +2035,7 @@ Make sure to follow all the instructions while answering questions.
                         createSnakeGame();
                     }
                 }
-            } else if (pureMessage.trim().toLowerCase().startsWith("/tau")) {
+            } else if (pureMessage.trim().toLowerCase().startsWith("/tau") && pureMessage.trim().toLowerCase() !== "/tau stop") {
                 // Store the user's command in the chat
                 const userMessageRef = push(messagesRef);
                 await update(userMessageRef, {
