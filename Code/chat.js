@@ -2094,7 +2094,7 @@ Make sure to follow all the instructions while answering questions.
                   Message: `✅ Correct! You've reached ${gameState.currentPosition} digits in ${timeTaken} seconds! Keep going...`,
                   Date: Date.now(),
                 });
-              } else if (nextDigit === '.') {
+              } else if (tauDigits.charAt(gameState.currentPosition + 1) === '.') {
                 // Special case for the decimal point
                 await update(responseMessageRef, {
                   User: "[Tau Game]",
