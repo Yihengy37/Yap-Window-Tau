@@ -1749,15 +1749,15 @@ Chat Log:
 ${chatHistory}
 
 Here are some instructions on how to respond.
-1. User emails that end with @lakesideschool.org are in the format xxxxy##@lakesideschoool.org, where xxxx is the user’s first name, y is the first letter of the user’s last name, and ## is the last two digits of the user’s graduation year from high school. Address users by their first name.
+1. User emails that end with @lakesideschool.org are in the format xxxxy##@lakesideschoool.org, where xxxx is the user's first name, y is the first letter of the user's last name, and ## is the last two digits of the user's graduation year from high school. Address users by their first name.
 1a. Here are some name preferences you should be aware of: carolynj30@lakesideschool.org (Carolyn J.) prefers to go by Seek. conquerert30_@lakesideschool.org (Conquerer T.) prefers to go by Hengsheng.
-1b. Here are some personal emails you should be aware of. Overall, try to figure out from the personal email what the person’s name is: reva27308@gmail.com is Reva S, aaravd037@gmail.com is Aarav D, alisofudge@gmail.com is Alice F, jarnolds723@gmail.com is Isaac W, purelyillusive@gmail.com is Max L, thescratchercat@gmail.com is Yiyang L, and w.n.lazypanda5050@gmail.com is Winston N.
+1b. Here are some personal emails you should be aware of. Overall, try to figure out from the personal email what the person's name is: reva27308@gmail.com is Reva S, aaravd037@gmail.com is Aarav D, alisofudge@gmail.com is Alice F, jarnolds723@gmail.com is Isaac W, purelyillusive@gmail.com is Max L, thescratchercat@gmail.com is Yiyang L, and w.n.lazypanda5050@gmail.com is Winston N.
 2. Here are some restrictions that you should be aware of.
 2a. Try to stay away from sensitive topics. Tread these carefully and gently remind users about the sensitivity of these topics if a user brings them up. For example, North Korea is a sensitive topic. Be aware of stereotypes (ex. sexism, racism, ageism) and stay away from these as well.
 2b. Try your best to keep your answers fresh. Even if users may end up having similar or even exactly the same questions, keep your answers fresh and do not get stuck in a never-ending loop of the same response.
 2c. Ultimately, try to use your judgement and be careful when responding. Do not do anything that is morally wrong. Use your judgement.
 3. Some more information you should be aware of:
-3a. Everyone’s name preferences are outlined here. Try to respect these.
+3a. Everyone's name preferences are outlined here. Try to respect these.
 3b. No users are related to any other users in a familial or romantic way.
 3c. When a user asks a question, respond to the question only. Do not refer to the chat log without user request. Do not include any response of the history in your message. When referring to the chat log upon request, any messages from "[AI]" are your previous responses.
 
@@ -2012,15 +2012,122 @@ Make sure to follow all the instructions while answering questions.
             createSnakeGame();
           }
         }
-      } else if (pureMessage.trim().toLowerCase().startsWith("/insert_command")) {
-        /* CODE HERE*/
-      } else {
-        const newMessageRef = push(messagesRef);
-        await update(newMessageRef, {
+      } else if (pureMessage.trim().toLowerCase().startsWith("/tau")) {
+        // Store the user's command in the chat
+        const userMessageRef = push(messagesRef);
+        await update(userMessageRef, {
           User: email,
           Message: message,
           Date: Date.now(),
         });
+
+        // Tau digits - first 100 digits
+        const tauDigits = "6.283185307179586476925286766559005768394338798750211641949889184615632812572417997256069650684234";
+        
+        // Create tau game in window scope so it persists between function calls
+        if (!window.tauGame) {
+          window.tauGame = {};
+        }
+        
+        // Initialize or reset the game for this user
+        window.tauGame[email] = {
+          active: true,
+          currentPosition: 0,
+          startTime: Date.now()
+        };
+        
+        // Send welcome message
+        const welcomeMessageRef = push(messagesRef);
+        await update(welcomeMessageRef, {
+          User: "[Tau Game]",
+          Message: "🔄 Welcome to the Tau Game! Enter the digits of tau (τ = 2π) one by one. Start with 6...",
+          Date: Date.now(),
+        });
+      } else {
+        // Check if user is in an active tau game
+        if (window.tauGame && window.tauGame[email] && window.tauGame[email].active) {
+          // Tau digits reference
+          const tauDigits = "6.283185307179586476925286766559005768394338798750211641949889184615632812572417997256069650684234";
+          const userInput = pureMessage.trim();
+          const gameState = window.tauGame[email];
+          
+          // Regular message is still sent
+          const newMessageRef = push(messagesRef);
+          await update(newMessageRef, {
+            User: email,
+            Message: message,
+            Date: Date.now(),
+          });
+          
+          if (userInput === "/tau stop") {
+            // End the game
+            window.tauGame[email].active = false;
+            const endMessageRef = push(messagesRef);
+            await update(endMessageRef, {
+              User: "[Tau Game]",
+              Message: `Game ended. You reached ${gameState.currentPosition} digits of tau.`,
+              Date: Date.now(),
+            });
+          } else {
+            // Check if the input is the next digit
+            const nextDigit = tauDigits.charAt(gameState.currentPosition);
+            const responseMessageRef = push(messagesRef);
+            
+            if (userInput === nextDigit) {
+              // Correct digit
+              gameState.currentPosition++;
+              
+              if (gameState.currentPosition === tauDigits.length) {
+                // User completed all available digits
+                const timeTaken = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
+                await update(responseMessageRef, {
+                  User: "[Tau Game]",
+                  Message: `🎉 Amazing! You've completed all ${tauDigits.length} digits of tau in ${timeTaken} seconds!`,
+                  Date: Date.now(),
+                });
+                window.tauGame[email].active = false;
+              } else if (gameState.currentPosition % 10 === 0) {
+                // Every 10 digits, show a milestone message
+                const timeTaken = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
+                await update(responseMessageRef, {
+                  User: "[Tau Game]",
+                  Message: `✅ Correct! You've reached ${gameState.currentPosition} digits in ${timeTaken} seconds! Keep going...`,
+                  Date: Date.now(),
+                });
+              } else if (nextDigit === '.') {
+                // Special case for the decimal point
+                await update(responseMessageRef, {
+                  User: "[Tau Game]",
+                  Message: `✅ Correct! Next is the decimal point...`,
+                  Date: Date.now(),
+                });
+              } else {
+                // Just acknowledge correct answer
+                await update(responseMessageRef, {
+                  User: "[Tau Game]",
+                  Message: `✅ Correct! Next digit...`,
+                  Date: Date.now(),
+                });
+              }
+            } else {
+              // Incorrect digit
+              const timeTaken = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
+              await update(responseMessageRef, {
+                User: "[Tau Game]",
+                Message: `❌ Game over! The next digit was "${nextDigit}". You reached ${gameState.currentPosition} digits in ${timeTaken} seconds. Type /tau to play again!`,
+                Date: Date.now(),
+              });
+              window.tauGame[email].active = false;
+            }
+          }
+        } else {
+          const newMessageRef = push(messagesRef);
+          await update(newMessageRef, {
+            User: email,
+            Message: message,
+            Date: Date.now(),
+          });
+        }
       }
 
       const snapshot = await get(messagesRef);
