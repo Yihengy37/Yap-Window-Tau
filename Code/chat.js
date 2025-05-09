@@ -383,8 +383,7 @@
             } = chatInfo;
             const memberList =
                 Type === "Private" ?
-                Members.split(",").map((m) => m.trim().replace(/\s+/g, "")) :
-                [];
+                Members.split(",").map((m) => m.trim().replace(/\s+/g, "")) : [];
 
             if (
                 Type === "Public" ||
@@ -2035,8 +2034,7 @@ Make sure to follow all the instructions while answering questions.
                         createSnakeGame();
                     }
                 }
-            } else if (pureMessage.trim().toLowerCase().startsWith("/tau") && pureMessage.trim().toLowerCase() !== "/tau stop") {
-                // Store the user's command in the chat
+            } else if (pureMessage.trim().toLowerCase().startsWith("/tau")) {
                 const userMessageRef = push(messagesRef);
                 await update(userMessageRef, {
                     User: email,
@@ -2044,37 +2042,30 @@ Make sure to follow all the instructions while answering questions.
                     Date: Date.now(),
                 });
 
-                // Tau digits - first 100 digits
-                const tauDigits = "6.28318530717958647692528676655900576839433879875021164194988918461563281257241799725606965068423413596429617302656461329418768921910116446345071881625696223490056820540387704221111928924589790986076392885762195133186689225695129646757356633054240381829129713384692069722090865329642678721452049828254744917401321263117634976304184192565850818343072873578518072002266106109764093304276829390388302321886611454073151918390618437223476386522358621023709614892475992549913470377150544978245587636602389825966734672488131328617204278989279044947438140435972188740554107843435258635350476934963693533881026400113625429052712165557154268551557921834727435744293688180244990686029309917074210158455937851784708403991222425804392172806883631962725954954261992103741442269999999";
+                const tauDigits = "6.283185307179586476925286766559005768394338798750211641949889184615632812572417997256069650684234";
 
-                // Create tau game in window scope so it persists between function calls
                 if (!window.tauGame) {
                     window.tauGame = {};
                 }
 
-                // Initialize or reset the game for this user
                 window.tauGame[email] = {
                     active: true,
                     currentPosition: 0,
                     startTime: Date.now()
                 };
 
-                // Send welcome message
                 const welcomeMessageRef = push(messagesRef);
                 await update(welcomeMessageRef, {
                     User: "[Tau Game]",
-                    Message: "🔄 Welcome to the Tau Game! Enter the digits of tau (τ = 2π) one by one. Start with 6...",
+                    Message: "🔄 Welcome to the Tau Game! Enter the digits of tau (τ = 2π) in groups of 5 digits. Start with 62831...",
                     Date: Date.now(),
                 });
             } else {
-                // Check if user is in an active tau game
                 if (window.tauGame && window.tauGame[email] && window.tauGame[email].active) {
-                    // Tau digits reference
                     const tauDigits = "6.283185307179586476925286766559005768394338798750211641949889184615632812572417997256069650684234";
                     const userInput = pureMessage.trim();
                     const gameState = window.tauGame[email];
 
-                    // Regular message is still sent
                     const newMessageRef = push(messagesRef);
                     await update(newMessageRef, {
                         User: email,
@@ -2083,7 +2074,6 @@ Make sure to follow all the instructions while answering questions.
                     });
 
                     if (userInput === "/tau stop") {
-                        // End the game
                         window.tauGame[email].active = false;
                         const endMessageRef = push(messagesRef);
                         await update(endMessageRef, {
@@ -2092,16 +2082,13 @@ Make sure to follow all the instructions while answering questions.
                             Date: Date.now(),
                         });
                     } else {
-                        // Check if the input is the next digit
-                        const nextDigit = tauDigits.charAt(gameState.currentPosition);
+                        const expectedDigits = tauDigits.substr(gameState.currentPosition, 5);
                         const responseMessageRef = push(messagesRef);
 
-                        if (userInput === nextDigit) {
-                            // Correct digit
-                            gameState.currentPosition++;
+                        if (userInput === expectedDigits) {
+                            gameState.currentPosition += 5;
 
-                            if (gameState.currentPosition === tauDigits.length) {
-                                // User completed all available digits
+                            if (gameState.currentPosition >= tauDigits.length) {
                                 const timeTaken = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
                                 await update(responseMessageRef, {
                                     User: "[Tau Game]",
@@ -2109,35 +2096,20 @@ Make sure to follow all the instructions while answering questions.
                                     Date: Date.now(),
                                 });
                                 window.tauGame[email].active = false;
-                            } else if (gameState.currentPosition % 10 === 0) {
-                                // Every 10 digits, show a milestone message
+                            } else {
                                 const timeTaken = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
                                 await update(responseMessageRef, {
                                     User: "[Tau Game]",
-                                    Message: `✅ Correct! You've reached ${gameState.currentPosition} digits in ${timeTaken} seconds! Keep going...`,
-                                    Date: Date.now(),
-                                });
-                            } else if (tauDigits.charAt(gameState.currentPosition) === '.') {
-                                // Special case for the decimal point
-                                await update(responseMessageRef, {
-                                    User: "[Tau Game]",
-                                    Message: `✅ Correct! Next is the decimal point...`,
-                                    Date: Date.now(),
-                                });
-                            } else {
-                                // Just acknowledge correct answer
-                                await update(responseMessageRef, {
-                                    User: "[Tau Game]",
-                                    Message: `✅ Correct! Next digit...`,
+                                    Message: `✅ Correct! You've reached ${gameState.currentPosition} digits in ${timeTaken} seconds. Keep going...`,
                                     Date: Date.now(),
                                 });
                             }
                         } else {
-                            // Incorrect digit
+                            const correctChunk = expectedDigits;
                             const timeTaken = ((Date.now() - gameState.startTime) / 1000).toFixed(1);
                             await update(responseMessageRef, {
                                 User: "[Tau Game]",
-                                Message: `❌ Game over! The next digit was "${nextDigit}". You reached ${gameState.currentPosition} digits in ${timeTaken} seconds. Type /tau to play again!`,
+                                Message: `❌ Game over! Expected "${correctChunk}" next. You reached ${gameState.currentPosition} digits in ${timeTaken} seconds. Type /tau to play again!`,
                                 Date: Date.now(),
                             });
                             window.tauGame[email].active = false;
@@ -2152,6 +2124,7 @@ Make sure to follow all the instructions while answering questions.
                     });
                 }
             }
+
 
             const snapshot = await get(messagesRef);
             const messages = snapshot.val() || {};
@@ -3718,10 +3691,8 @@ Make sure to follow all the instructions while answering questions.
             Description: description || "No description provided",
 
             Members: type === "Private" ?
-                members.join(",") :
-                isModifying && originalMembers && originalMembers !== "None" ?
-                originalMembers :
-                email.replace(/\./g, "*"),
+                members.join(",") : isModifying && originalMembers && originalMembers !== "None" ?
+                originalMembers : email.replace(/\./g, "*"),
             Type: type,
             Creator: email.replace(/\./g, "*"),
         };
